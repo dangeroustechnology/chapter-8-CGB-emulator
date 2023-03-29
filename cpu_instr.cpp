@@ -67,6 +67,8 @@ void cpu_instr::load_rrnn(unsigned short r, unsigned short n) {		// load to regi
 	case 6:
 		memo.set_HL(n);
 		break;
+	case 8:
+		memo.sp = n;
 	}
 }
 
@@ -237,8 +239,8 @@ void cpu_instr::complement_a() {
 	memo.setflag_H(true);
 }
 
-void cpu_instr::daa() {
-	// some bcd thing, i think
+void cpu_instr::daa() {									// some bcd thing, i think
+	nop();
 }
 
 // 16-bit arithmetic instructions
@@ -253,9 +255,6 @@ void cpu_instr::add_16(unsigned short r) {				// r = bd, de, hl, or sp
 
 void cpu_instr::increment_16(unsigned char r) {
 	switch (r) {
-	case 0:	// bad workaround lmao
-		memo.sp++;
-		break;
 	case 2:
 		memo.set_BC(memo.get_BC() + 1);
 		break;
@@ -264,6 +263,9 @@ void cpu_instr::increment_16(unsigned char r) {
 		break;
 	case 6:
 		memo.set_HL(memo.get_HL() + 1);
+		break;
+	case 8:
+		memo.sp++;
 		break;
 	}
 	memo.setflag_N(false);
@@ -304,7 +306,7 @@ void cpu_instr::jump(unsigned short a) {
 }
 
 void cpu_instr::jump_cnd(bool c, unsigned short a) {	// the docs on this one are a bit confusing but it looks as tho
-	if (c) {											// the condition can be c, !c, z, or !z
+	if (c) {											// the condition can be c, n && c, z, or n && z
 		memo.pc = a;
 	}
 }
@@ -339,12 +341,12 @@ void cpu_instr::reti() {
 	// ugh, dont even get me started
 }
 
-void cpu_instr::halt() {
-	// pass
+void cpu_instr::halt() {											// TODO
+	nop();
 }
 
-void cpu_instr::stop() {
-	// pass
+void cpu_instr::stop() {											// TODO
+	nop();
 }
 
 void cpu_instr::set_interrupts(bool f) {
