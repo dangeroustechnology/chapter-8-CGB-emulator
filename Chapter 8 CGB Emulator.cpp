@@ -1,6 +1,5 @@
 // Chapter 8 CGB Emulator.cpp : This file contains the 'main' function. Program execution begins and ends there.
 // Multithreading
-// Function pointers
 
 #include <iostream>
 #include <bitset>
@@ -21,7 +20,7 @@ int main(string file)
     const unsigned char L = 7;
     const unsigned char SP = 8;
     //*
-    // file "dummy" exclusively contains 0x00 - 0x0F in asc.order
+    // file "dummy" exclusively contains 0x00 - 0x0F in asc. order
     cpu_instr cpu;
     cpu.memo.fill("C:\\Users\\itbra\\Downloads\\dummy");
     bool clock = true;
@@ -823,6 +822,269 @@ int main(string file)
         case 0xBF:
             cout << cpu.memo.pc << "CP A" << endl;
             cpu.compare(A, cpu.memo.reg[A]);
+            break;
+        case 0xC0:
+            cout << cpu.memo.pc << "RET NZ" << endl;
+            cpu.ret_cnd(cpu.memo.getflag_N() && cpu.memo.getflag_Z());
+            break;
+        case 0xC1:
+            cout << cpu.memo.pc << "POP BC" << endl;
+            cpu.memo.set_BC(cpu.pop_rr());
+            break;
+        case 0xC2:
+            cout << cpu.memo.pc << "JP NZ ADDR" << endl;
+            unsigned char lsb = cpu.memo.read();
+            unsigned short addr = cpu.memo.read();
+            addr = addr << 8;
+            addr |= lsb;
+            cpu.jump_cnd(cpu.memo.getflag_N() && cpu.memo.getflag_Z(), addr);
+            break;
+        case 0xC3:
+            cout << cpu.memo.pc << "JP ADDR" << endl;
+            unsigned char lsb = cpu.memo.read();
+            unsigned short addr = cpu.memo.read();
+            addr = addr << 8;
+            addr |= lsb;
+            cpu.jump(addr);
+            break;
+        case 0xC4:
+            cout << cpu.memo.pc << "CALL NZ ADDR" << endl;
+            unsigned char lsb = cpu.memo.read();
+            unsigned short addr = cpu.memo.read();
+            addr = addr << 8;
+            addr |= lsb;
+            cpu.call_cnd(cpu.memo.getflag_N() && cpu.memo.getflag_Z(), addr);
+            break;
+        case 0xC5:
+            cout << cpu.memo.pc << "PUSH BC" << endl;
+            cpu.push_rr(B);
+            break;
+        case 0xC6:
+            cout << cpu.memo.pc << "ADD A N" << endl;
+            cpu.add_reg(A, cpu.memo.read());
+            break;
+        case 0xC7:
+            cout << cpu.memo.pc << "RST 00" << endl;
+            cpu.call(0x0);
+            break;
+        case 0xC8:
+            cout << cpu.memo.pc << "RET Z" << endl;
+            cpu.ret_cnd(cpu.memo.getflag_Z());
+            break;
+        case 0xC9:
+            cout << cpu.memo.pc << "RET" << endl;
+            cpu.ret();
+            break;
+        case 0xCA:
+            cout << cpu.memo.pc << "JP Z ADDR" << endl;
+            unsigned char lsb = cpu.memo.read();
+            unsigned short addr = cpu.memo.read();
+            addr = addr << 8;
+            addr |= lsb;
+            cpu.jump_cnd(cpu.memo.getflag_Z(), addr);
+        case 0xCB:                                                  // TODO
+            cout << cpu.memo.pc << "PREFIX" << endl;
+            cpu.nop();
+            break;
+        case 0xCC:
+            cout << cpu.memo.pc << "CALL Z ADDR" << endl;
+            unsigned char lsb = cpu.memo.read();
+            unsigned short addr = cpu.memo.read();
+            addr = addr << 8;
+            addr |= lsb;
+            cpu.call_cnd(cpu.memo.getflag_Z(), addr);
+            break;
+        case 0xCD:
+            cout << cpu.memo.pc << "CALL ADDR" << endl;
+            unsigned char lsb = cpu.memo.read();
+            unsigned short addr = cpu.memo.read();
+            addr = addr << 8;
+            addr |= lsb;
+            cpu.call(addr);
+            break;
+        case 0xCE:
+            cout << cpu.memo.pc << "ADC A N" << endl;
+            cpu.add_reg_c(A, cpu.memo.read());
+            break;
+        case 0xCF:
+            cout << cpu.memo.pc << "RST 08H" << endl;
+            cpu.call(0x08);
+            break;
+        case 0xD0:
+            cout << cpu.memo.pc << "RET NC" << endl;
+            cpu.ret_cnd(cpu.memo.getflag_N() && cpu.memo.getflag_C());
+            break;
+        case 0xD1:
+            cout << cpu.memo.pc << "POP DE" << endl;
+            cpu.memo.set_DE(cpu.pop_rr());
+            break;
+        case 0xD2:
+            cout << cpu.memo.pc << "JP NC ADDR" << endl;
+            unsigned char lsb = cpu.memo.read();
+            unsigned short addr = cpu.memo.read();
+            addr = addr << 8;
+            addr |= lsb;
+            cpu.jump_cnd(cpu.memo.getflag_N() && cpu.memo.getflag_C(), addr);
+            break;
+        case 0xD4: // D3 is illegal
+            cout << cpu.memo.pc << "CALL NC ADDR" << endl;
+            unsigned char lsb = cpu.memo.read();
+            unsigned short addr = cpu.memo.read();
+            addr = addr << 8;
+            addr |= lsb;
+            cpu.call_cnd(cpu.memo.getflag_N() && cpu.memo.getflag_C(), addr);
+            break;
+        case 0xD5:
+            cout << cpu.memo.pc << "PUSH DE" << endl;
+            cpu.push_rr(D);
+            break;
+        case 0xD6:
+            cout << cpu.memo.pc << "SUB N" << endl;
+            cpu.sub_reg(A, cpu.memo.read());
+            break;
+        case 0xD7:
+            cout << cpu.memo.pc << "RST 10H" << endl;
+            cpu.nop();
+            break;
+        case 0xD8:
+            cout << cpu.memo.pc << "RET C" << endl;
+            cpu.ret_cnd(cpu.memo.getflag_C());
+            break;
+        case 0xD9:
+            cout << cpu.memo.pc << "RETI" << endl;
+            cpu.reti();
+            break;
+        case 0xDA:
+            cout << cpu.memo.pc << "JP C ADDR" << endl;
+            unsigned char lsb = cpu.memo.read();
+            unsigned short addr = cpu.memo.read();
+            addr = addr << 8;
+            addr |= lsb;
+            cpu.jump_cnd(cpu.memo.getflag_C(), addr);
+            break;
+        case 0xDC: // DB is illegal
+            cout << cpu.memo.pc << "CALL C ADDR" << endl;
+            unsigned char lsb = cpu.memo.read();
+            unsigned short addr = cpu.memo.read();
+            addr = addr << 8;
+            addr |= lsb;
+            cpu.call_cnd(cpu.memo.getflag_C(), addr);
+            break;
+        case 0xDE: // DD is illegal
+            cout << cpu.memo.pc << "SBC A N" << endl;
+            cpu.sub_reg_c(A, cpu.memo.read());
+            break;
+        case 0xDF:
+            cout << cpu.memo.pc << "RST 18H" << endl;
+            cpu.call(0x18);
+            break;
+        case 0xE0:
+            cout << cpu.memo.pc << "LDH ADDR A" << endl;
+            unsigned short addr = 0xFF00 | cpu.memo.read();
+            cpu.load_ar(addr, A);
+        case 0xE1:
+            cout << cpu.memo.pc << "POP HL" << endl;
+            cpu.memo.set_HL(cpu.pop_rr());
+            break;
+        case 0xE2:
+            cout << cpu.memo.pc << "LD (C) A" << endl;
+            unsigned short addr = 0xFF00 | cpu.memo.reg[C];
+            cpu.load_ar(addr, A);
+            break;
+        case 0xE5: // E3 and E4 are illegal
+            cout << cpu.memo.pc << "PUSH HL" << endl;
+            cpu.push_rr(H);
+            break;
+        case 0xE6:
+            cout << cpu.memo.pc << "AND A N" << endl;
+            cpu.and_reg(A, cpu.memo.read());
+            break;
+        case 0xE7:
+            cout << cpu.memo.pc << "RST 20H" << endl;
+            cpu.call(0x20);
+            break;
+        case 0xE8:
+            cout << cpu.memo.pc << "ADD SP N" << endl;
+            signed char data = cpu.memo.read();
+            cpu.memo.sp += data;
+            break;
+        case 0xE9:
+            cout << cpu.memo.pc << "JP HL" << endl;
+            cpu.jump(cpu.memo.get_HL());
+            break;
+        case 0xEA:
+            cout << cpu.memo.pc << "LD ADDR A" << endl;
+            unsigned char lsb = cpu.memo.read();
+            unsigned short addr = cpu.memo.read();
+            addr = addr << 8;
+            addr |= lsb;
+            cpu.load_ar(addr, A);
+            break;
+        case 0xEE: // EB-ED are illegal
+            cout << cpu.memo.pc << "XOR A N" << endl;
+            cpu.xor_reg(A, cpu.memo.read());
+            break;
+        case 0xEF:
+            cout << cpu.memo.pc << "RST 28H" << endl;
+            cpu.call(0x28);
+            break;
+        case 0xF0:
+            cout << cpu.memo.pc << "LDH A ADDR" << endl;
+            unsigned short addr = 0xFF | cpu.memo.read();
+            cpu.load_ra(A, addr);
+            break;
+        case 0xF1:
+            cout << cpu.memo.pc << "POP AF" << endl;
+            cpu.memo.set_AF(cpu.pop_rr());
+            break;
+        case 0xF2:
+            cout << cpu.memo.pc << "LD A (C)" << endl;
+            unsigned short addr = 0xFF00 | cpu.memo.reg[C];
+            cpu.load_ra(A, addr);
+            break;
+        case 0xF3:                                                  // TODO
+            cpu.nop();
+            break;
+        case 0xF5: // F4 is illegal
+            cout << cpu.memo.pc << "PUSH AF" << endl;
+            cpu.push_rr(A);
+            break;
+        case 0xF6:
+            cout << cpu.memo.pc << "OR A N" << endl;
+            cpu.or_reg(A, cpu.memo.read());
+            break;
+        case 0xF7:
+            cout << cpu.memo.pc << "RST 30H" << endl;
+            cpu.call(0x30);
+            break;
+        case 0xF8:
+            cout << cpu.memo.pc << "LD HL SP+N" << endl;
+            signed short data = cpu.memo.sp + cpu.memo.read();
+            cpu.load_rrnn(H, data);
+            break;
+        case 0xF9:
+            cout << cpu.memo.pc << "LD SP HL" << endl;
+            cpu.load_sphl();
+            break;
+        case 0xFA:
+            cout << cpu.memo.pc << "LD A ADDR" << endl;
+            unsigned char lsb = cpu.memo.read();
+            unsigned short addr = cpu.memo.read();
+            addr = addr << 8;
+            addr |= lsb;
+            cpu.load_ra(A, addr);
+            break;
+        case 0xFB:                                                  // TODO
+            cout << cpu.memo.pc << "EI" << endl;
+            cpu.nop();
+            break;
+        case 0xFE: // FC and FD are illegal
+            cout << cpu.memo.pc << "CP A N" << endl;
+            cpu.compare(A, cpu.memo.read());
+            break;
+        case 0xFF:
+            cout << cpu.memo.pc << "RST 38H" << endl;
+            cpu.call(0x38);
             break;
         }
     }
