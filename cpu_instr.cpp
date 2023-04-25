@@ -50,7 +50,7 @@ void cpu_instr::load_adr(unsigned char r) {							// load to addr from register 
 	memo.set_HL(memo.get_HL() - 1);
 }
 
-void cpu_instr::load_air(unsigned char r) {						// load to addr from register (increment)
+void cpu_instr::load_air(unsigned char r) {							// load to addr from register (increment)
 	memo.mem[memo.get_HL()] = memo.reg[r];
 	memo.set_HL(memo.get_HL() + 1);
 }
@@ -83,7 +83,7 @@ void cpu_instr::load_sphl() {										// load to stack pointer from register (H
 	memo.sp = memo.get_HL();
 }
 
-void cpu_instr::push_rr(unsigned char r) {							// push to stack
+void cpu_instr::push_rr(unsigned char r) {							// push register to stack
 	unsigned char low = memo.reg[r + 1];
 	unsigned char high = memo.reg[r];
 	memo.stack[memo.sp] = low;
@@ -92,7 +92,7 @@ void cpu_instr::push_rr(unsigned char r) {							// push to stack
 	memo.sp++;
 }
 
-void cpu_instr::push_nn(unsigned short d) {
+void cpu_instr::push_nn(unsigned short d) {							// push immediate data to stack
 	unsigned char low = d & 0xFF;
 	unsigned char high = (d >> 8) & 0xFF;
 	memo.stack[memo.sp] = low;
@@ -113,14 +113,14 @@ unsigned short cpu_instr::pop_rr() {								// pop from stack
 
 // 8-bit arithmetic instructions
 // i still have to figure out exactly how to deal with Hf. some other time, perhaps
-void cpu_instr::add_reg(unsigned char r, unsigned char n) {
+void cpu_instr::add_reg(unsigned char r, unsigned char n) {		// add data to register
 	memo.setflag_C(0xFF - n < memo.reg[r]);
 	unsigned char result = memo.reg[r] + n;
 	memo.setflag_Z(result == 0);
 	memo.reg[r] = result;
 }
 
-void cpu_instr::add_reg_c(unsigned char r, unsigned char n) {
+void cpu_instr::add_reg_c(unsigned char r, unsigned char n) {	// add data to register with carry
 	int carry = memo.getflag_C();
 	memo.setflag_C(0xFF - n - carry < memo.reg[r]);
 	memo.setflag_N(false);
@@ -129,75 +129,51 @@ void cpu_instr::add_reg_c(unsigned char r, unsigned char n) {
 	memo.reg[r] = result;
 }
 
-void cpu_instr::sub_reg(unsigned char r, unsigned char n) {
-	if (n > memo.reg[r]) {
-		memo.setflag_C(true);
-	}
-	else if (n == memo.reg[r]) {
-		memo.setflag_Z(true);
-	}
-	else {
-		memo.setflag_C(false);
-		memo.setflag_Z(false);
-	}
+void cpu_instr::sub_reg(unsigned char r, unsigned char n) {		// subtract data from register
+	memo.setflag_C(n > memo.reg[r]);
+	memo.setflag_Z(n == memo.reg[r]);
 	memo.setflag_N(true);
 	memo.reg[r] -= n;
 }
 
-void cpu_instr::sub_reg_c(unsigned char r, unsigned char n) {
+void cpu_instr::sub_reg_c(unsigned char r, unsigned char n) {	// subtract data from register with carry
 	int carry = memo.getflag_C();
-	if (n > memo.reg[r] + carry) {
-		memo.setflag_C(true);
-	}
-	else if (n == memo.reg[r] + carry) {
-		memo.setflag_Z(true);
-	}
-	else {
-		memo.setflag_C(false);
-		memo.setflag_Z(false);
-	}
+	memo.setflag_C(n > memo.reg[r] + carry);
+	memo.setflag_Z(n == memo.reg[r] + carry);
 	memo.setflag_N(true);
 	memo.reg[r] -= n + carry;
 }
 
-void cpu_instr::compare(unsigned char r, unsigned char n) {
-	if (n > memo.reg[r]) {
-		memo.setflag_C(true);
-	}
-	else if(n == memo.reg[r]) {
-		memo.setflag_Z(true);
-	}
-	else {
-		memo.setflag_C(false);
-		memo.setflag_Z(false);
-	}
+void cpu_instr::compare(unsigned char r, unsigned char n) {		// compare register to data
+	memo.setflag_C(n > memo.reg[r]);							// basically just sub() w/o the subtraction
+	memo.setflag_Z(n == memo.reg[r]);
 	memo.setflag_N(true);
 }
 
-void cpu_instr::increment(unsigned char r) {
+void cpu_instr::increment(unsigned char r) {					// increment register
 	memo.reg[r]++;
 	memo.setflag_Z(memo.reg[r] == 0);
 	memo.setflag_N(false);
 }
-void cpu_instr::increment(unsigned short a) {
+void cpu_instr::increment(unsigned short a) {					// increment at address
 	memo.mem[a]++;
 	memo.setflag_Z(memo.mem[a] == 0);
 	memo.setflag_N(false);
 }
 
-void cpu_instr::decrement(unsigned char r) {
+void cpu_instr::decrement(unsigned char r) {					// decrement register
 	memo.reg[r]--;
 	memo.setflag_Z(memo.reg[r] == 0);
 	memo.setflag_N(true);
 }
-void cpu_instr::decrement(unsigned short a) {
+void cpu_instr::decrement(unsigned short a) {					// decrement at address
 	memo.mem[a]--;
 	memo.setflag_Z(memo.mem[a] == 0);
 	memo.setflag_N(true);
 }
 
 // Logic instructions
-void cpu_instr::and_reg(unsigned char r, unsigned char n) {
+void cpu_instr::and_reg(unsigned char r, unsigned char n) {	// logical and the register
 	memo.reg[r] &= n;
 	memo.setflag_Z(memo.reg[r] == 0);
 	memo.setflag_N(false);
@@ -205,7 +181,7 @@ void cpu_instr::and_reg(unsigned char r, unsigned char n) {
 	memo.setflag_C(false);
 }
 
-void cpu_instr::or_reg(unsigned char r, unsigned char n) {
+void cpu_instr::or_reg(unsigned char r, unsigned char n) {	// logical or the register
 	memo.reg[r] |= n;
 	memo.setflag_Z(memo.reg[r] == 0);
 	memo.setflag_N(false);
@@ -213,7 +189,7 @@ void cpu_instr::or_reg(unsigned char r, unsigned char n) {
 	memo.setflag_C(false);
 }
 
-void cpu_instr::xor_reg(unsigned char r, unsigned char n) {
+void cpu_instr::xor_reg(unsigned char r, unsigned char n) {	// xor the register
 	memo.reg[r] ^= n;
 	memo.setflag_Z(memo.reg[r] == 0);
 	memo.setflag_N(false);
@@ -221,39 +197,38 @@ void cpu_instr::xor_reg(unsigned char r, unsigned char n) {
 	memo.setflag_C(false);
 }
 
-void cpu_instr::complement_c() {
+void cpu_instr::complement_c() {							// toggle carry flag
 	memo.setflag_C(!memo.getflag_C());
 	memo.setflag_N(false);
 	memo.setflag_H(false);
 }
 
-void cpu_instr::set_cflag(bool flag) {
+void cpu_instr::set_cflag(bool flag) {						// set carry flag
 	memo.setflag_C(flag);
 	memo.setflag_N(false);
 	memo.setflag_H(false);
 }
 
-void cpu_instr::complement_a() {
+void cpu_instr::complement_a() {							// complement A register
 	memo.reg[0] = ~memo.reg[0];
 	memo.setflag_N(true);
 	memo.setflag_H(true);
 }
 
-void cpu_instr::daa() {									// some bcd thing, i think
+void cpu_instr::daa() {												// TODO: has to do w/ BCD
 	nop();
 }
 
 // 16-bit arithmetic instructions
-void cpu_instr::add_16(unsigned short r) {				// r = bd, de, hl, or sp
+void cpu_instr::add_16(unsigned short r) {		// add 16-bit register (BC, DE, HL, SP) to HL
 	memo.setflag_C(0xFFFF - r < memo.get_HL());
 	unsigned short result = memo.get_HL() + r;
 	memo.setflag_Z(result == 0);
 	memo.setflag_N(false);
 	memo.set_HL(result);
-
 }
 
-void cpu_instr::increment_16(unsigned char r) {
+void cpu_instr::increment_16(unsigned char r) {	// increment 16-bit register
 	switch (r) {
 	case 2:
 		memo.set_BC(memo.get_BC() + 1);
@@ -270,12 +245,8 @@ void cpu_instr::increment_16(unsigned char r) {
 	}
 	memo.setflag_N(false);
 }
-void cpu_instr::decrement_16(unsigned char r) {
+void cpu_instr::decrement_16(unsigned char r) {	// decrement 16-bit register
 	switch (r) {
-	case 0:	// bad workaround lmao
-		memo.sp--;
-		memo.setflag_Z(memo.sp == 0);
-		break;
 	case 2:
 		memo.set_BC(memo.get_BC() - 1);
 		memo.setflag_Z(memo.get_BC() == 0);
@@ -288,71 +259,144 @@ void cpu_instr::decrement_16(unsigned char r) {
 		memo.set_HL(memo.get_HL() - 1);
 		memo.setflag_Z(memo.get_HL() == 0);
 		break;
+	case 8:
+		memo.sp--;
+		memo.setflag_Z(memo.sp == 0);
+		break;
 	}
 	memo.setflag_N(true);
 }
 
-void cpu_instr::add_sp(signed char data) {		// TODO: the gd flag management you lazy child
+void cpu_instr::add_sp(signed char data) {		// add signed immediate data to SP
+	bool flag = (data >= 0) ? 0xFFFF - data < memo.sp : false;
+	memo.setflag_C(flag);
 	memo.sp += data;
 }
 
-void cpu_instr::load_HLSP(signed char data) {	// TODO: see above
+void cpu_instr::load_HLSP(signed char data) {	// load SP + signed data to HL
+	bool flag = (data >= 0) ? 0xFFFF - data < memo.sp : false;
+	memo.setflag_C(flag);
 	memo.set_HL(memo.sp + data);
 }
 
 // Control flow instructions
-void cpu_instr::jump(unsigned short a) {
+void cpu_instr::jump(unsigned short a) {				// jump to address
 	memo.pc = a;
 }
 
-void cpu_instr::jump_cnd(bool c, unsigned short a) {	// the docs on this one are a bit confusing but it looks as tho
-	if (c) {											// the condition can be c, n && c, z, or n && z
+void cpu_instr::jump_cnd(bool c, unsigned short a) {	// conditional jump (C, Z, N && C, N && Z)
+	if (c) {											
 		memo.pc = a;
 	}
 }
 
-void cpu_instr::jump_rel(signed char o) {
+void cpu_instr::jump_rel(signed char o) {				// jump relative to current position
 	memo.pc += o;
 }
 
-void cpu_instr::call(unsigned short a) {
+void cpu_instr::call(unsigned short a) {				// function call
 	push_nn(memo.pc);
 	memo.pc = a;
 }
 
-void cpu_instr::call_cnd(bool c, unsigned short a) {
+void cpu_instr::call_cnd(bool c, unsigned short a) {	// conditonal function call
 	if (c) {
 		push_nn(memo.pc);
 		memo.pc = a;
 	}
 }
 
-void cpu_instr::ret() {
+void cpu_instr::ret() {									// return from function call
 	memo.pc = pop_rr();
 }
 
-void cpu_instr::ret_cnd(bool c) {
+void cpu_instr::ret_cnd(bool c) {						// conditional return
 	if (c) {
 		memo.pc = pop_rr();
 	}
 }
 
-void cpu_instr::reti() {
-	// ugh, dont even get me started
-}
-
-void cpu_instr::halt() {											// TODO
+void cpu_instr::reti() {											// TODO: return w/ interrupts
 	nop();
 }
 
-void cpu_instr::stop() {											// TODO
+void cpu_instr::halt() {											// TODO: stop clock until interrupt
 	nop();
 }
 
-void cpu_instr::set_interrupts(bool f) {
+void cpu_instr::stop() {											// TODO: stop clock
+	memo.read(); // by convention, STOP (0x10) is followed by 0x00
+}
+
+void cpu_instr::set_interrupts(bool f) {							// TODO: set interrupts flag
 	// interrupts = f;
 }
 
-void cpu_instr::nop() {
-	memo.pc++;
+void cpu_instr::nop() {									// no operation
+	// "this page left intentionally blank"
+}
+
+// Rotate and shift instructions
+void  cpu_instr::rot_left(unsigned char r) {						// rotate register left
+	unsigned char n = memo.reg[r];
+	memo.reg[r] = n << 1;
+	memo.setflag_C(((n >> 7) & 0x01) == 1);
+	memo.setflag_Z(0);
+	memo.setflag_N(0);
+	memo.setflag_H(0);
+}
+
+void cpu_instr::rot_left_c(unsigned char r) {						// rotate register left thru carry
+	unsigned char n = memo.reg[r];
+	unsigned char msb = (n >> 7) & 0x01;
+	n = n << 1;
+	memo.getflag_C() ? n |= 0x01 : n &= 0xFE; // 0xFE = 0b11111110
+	memo.reg[r] = n;
+	memo.setflag_C(msb);
+	memo.setflag_Z(0);
+	memo.setflag_N(0);
+	memo.setflag_H(0);
+}
+
+void  cpu_instr::rot_right(unsigned char r) {						// rotate register right
+	unsigned char n = memo.reg[r];
+	memo.setflag_C((n & 0x01) == 1);
+	memo.reg[r] = n >> 1;
+	memo.setflag_Z(0);
+	memo.setflag_N(0);
+	memo.setflag_H(0);
+}
+
+void cpu_instr::rot_right_c(unsigned char r) {						// rotate register right thru carry
+	unsigned char n = memo.reg[r];
+	unsigned char lsb = n & 0x01;
+	n = n >> 1;
+	memo.getflag_C() ? n |= 0x80 : n &= 0x7F; // 0x80 = 0b10000000, 0x7F = 0b01111111
+	memo.reg[r] = n;
+	memo.setflag_C(lsb);
+	memo.setflag_Z(0);
+	memo.setflag_N(0);
+	memo.setflag_H(0);
+}
+
+void cpu_instr::set_bit_reg(unsigned char b, unsigned char r) {		// set bit b of register
+	unsigned char mask = 0x01 << b;
+	memo.reg[r] |= mask;
+}
+
+void cpu_instr::set_bit_addr(unsigned char b, unsigned short a) {	// set bit b at address
+	unsigned char mask = 0x01 << b;
+	memo.mem[a] |= mask;
+}
+
+void cpu_instr::reset_bit_reg(unsigned char b, unsigned char r) {	// reset bit b of register
+	unsigned char mask = 0x01 << b;
+	mask = ~mask;
+	memo.reg[r] &= mask;
+}
+
+void cpu_instr::reset_bit_addr(unsigned char b, unsigned short a) {	// reset bit b at address
+	unsigned char mask = 0x01 << b;
+	mask = ~mask;
+	memo.mem[a] &= mask;
 }

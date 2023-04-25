@@ -9,7 +9,7 @@ memory::memory() {
     for (int i = 0; i < 8; i++) {
         reg[i] = 0;
     }
-    for (int i = 0; i < 16; i++) {
+    for (int i = 0; i < 64; i++) {
         stack[i] = 0;
     }
 }
@@ -18,6 +18,7 @@ void memory::fill(string filename) {
     fr.read_in_file(filename, mem);
 }
 
+// 16-bit register getters
 unsigned short memory::get_AF() {
     unsigned short high = reg[0];
     high = high << 8;
@@ -26,7 +27,7 @@ unsigned short memory::get_AF() {
         flags[i] == true ? low |= 0x1 : low |= 0x0;
         low = low << 1;
     }
-    low = low << 4; // flags should be in first nybble of low
+    low = low << 4; // flags should be in upper nybble of low
     unsigned short af = high | low;
     return af;
 }
@@ -52,10 +53,11 @@ unsigned short memory::get_HL() {
     return hl;
 }
 
+// 16-bit register setters
 void memory::set_AF(unsigned short data) {
     unsigned char a = (data >> 8) & 0xFF;
     reg[0] = a;
-    unsigned char f = (data >> 4) & 0x0F; // flags are in upper nybble of f
+    unsigned char f = (data >> 4) & 0x0F; // flags are in upper nybble of F
     for (int i = 0; i < 4; i++) {
         (f & 0x1) == 1 ? flags[i] = true : flags[i] = false;
         f = f >> 1;
@@ -81,6 +83,7 @@ void memory::set_HL(unsigned short data) {
     reg[7] = low;
 }
 
+// flag getters
 bool memory::getflag_Z() {
     return flags[0];
 }
@@ -97,6 +100,7 @@ bool memory::getflag_C() {
     return flags[3];
 }
 
+// flag setters
 void memory::setflag_Z(bool flag) {
     flags[0] = flag;
 }
@@ -113,10 +117,10 @@ void memory::setflag_C(bool flag) {
     flags[3] = flag;
 }
 
-unsigned char memory::read() {
+unsigned char memory::read() {  // read a byte and increment PC
     return mem[pc++];
 }
 
-unsigned char* memory::dump() {
+unsigned char* memory::dump() { // return a copy of memory for dumping
     return mem;
 }

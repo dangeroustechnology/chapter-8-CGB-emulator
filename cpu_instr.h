@@ -63,7 +63,18 @@ public:
 	void set_interrupts(bool flag);							// TODO
 	void nop();
 	// Rotate & shift instructions
-
+	void rot_left(unsigned char register1);
+	void rot_left_c(unsigned char register1);
+	void rot_right(unsigned char register1);
+	void rot_right_c(unsigned char register1);
+	void swap_reg(unsigned char register1);
+	void swap_addr(unsigned short address);
 	// Bit instructions
+	void bit_reg(unsigned char bit, unsigned char register1);
+	void bit_addr(unsigned char bit, unsigned short address);
+	void set_bit_reg(unsigned char bit, unsigned char register1);
+	void set_bit_addr(unsigned char bit, unsigned short address);
+	void reset_bit_reg(unsigned char bit, unsigned char register1);
+	void reset_bit_addr(unsigned char bit, unsigned short address);
 };
 
