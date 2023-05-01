@@ -64,11 +64,21 @@ public:
 	void nop();
 	// Rotate & shift instructions
 	void rot_left(unsigned char register1);
+	void rot_left(unsigned short address);
 	void rot_left_c(unsigned char register1);
+	void rot_left_c(unsigned short address);
 	void rot_right(unsigned char register1);
+	void rot_right(unsigned short address);
 	void rot_right_c(unsigned char register1);
+	void rot_right_c(unsigned short address);
 	void swap_reg(unsigned char register1);
 	void swap_addr(unsigned short address);
+	void shift_left(unsigned char r);
+	void shift_left(unsigned short a);
+	void shift_right_a(unsigned char reg);
+	void shift_right_a(unsigned short a);
+	void shift_right_l(unsigned char reg);
+	void shift_right_l(unsigned short a);
 	// Bit instructions
 	void bit_reg(unsigned char bit, unsigned char register1);
 	void bit_addr(unsigned char bit, unsigned short address);

@@ -112,7 +112,7 @@ unsigned short cpu_instr::pop_rr() {								// pop from stack
 }
 
 // 8-bit arithmetic instructions
-// i still have to figure out exactly how to deal with Hf. some other time, perhaps
+// i have not implemented Hf regularly due to the fact that it is only used by DAA, which is also unimplemented
 void cpu_instr::add_reg(unsigned char r, unsigned char n) {		// add data to register
 	memo.setflag_C(0xFF - n < memo.reg[r]);
 	unsigned char result = memo.reg[r] + n;
@@ -122,32 +122,32 @@ void cpu_instr::add_reg(unsigned char r, unsigned char n) {		// add data to regi
 
 void cpu_instr::add_reg_c(unsigned char r, unsigned char n) {	// add data to register with carry
 	int carry = memo.getflag_C();
-	memo.setflag_C(0xFF - n - carry < memo.reg[r]);
 	memo.setflag_N(false);
+	memo.setflag_C(0xFF - n - carry < memo.reg[r]);
 	unsigned char result = memo.reg[r] + n + carry;
 	memo.setflag_Z(result == 0);
 	memo.reg[r] = result;
 }
 
 void cpu_instr::sub_reg(unsigned char r, unsigned char n) {		// subtract data from register
-	memo.setflag_C(n > memo.reg[r]);
 	memo.setflag_Z(n == memo.reg[r]);
 	memo.setflag_N(true);
+	memo.setflag_C(n > memo.reg[r]);
 	memo.reg[r] -= n;
 }
 
 void cpu_instr::sub_reg_c(unsigned char r, unsigned char n) {	// subtract data from register with carry
 	int carry = memo.getflag_C();
-	memo.setflag_C(n > memo.reg[r] + carry);
 	memo.setflag_Z(n == memo.reg[r] + carry);
 	memo.setflag_N(true);
+	memo.setflag_C(n > memo.reg[r] + carry);
 	memo.reg[r] -= n + carry;
 }
 
 void cpu_instr::compare(unsigned char r, unsigned char n) {		// compare register to data
-	memo.setflag_C(n > memo.reg[r]);							// basically just sub() w/o the subtraction
-	memo.setflag_Z(n == memo.reg[r]);
+	memo.setflag_Z(n == memo.reg[r]);							// basically just sub() w/o the subtraction
 	memo.setflag_N(true);
+	memo.setflag_C(n > memo.reg[r]);
 }
 
 void cpu_instr::increment(unsigned char r) {					// increment register
@@ -333,32 +333,53 @@ void cpu_instr::set_interrupts(bool f) {							// TODO: set interrupts flag
 }
 
 void cpu_instr::nop() {									// no operation
-	// "this page left intentionally blank"
+	// "this page intentionally left blank"
 }
 
 // Rotate and shift instructions
-void  cpu_instr::rot_left(unsigned char r) {						// rotate register left
+void  cpu_instr::rot_left(unsigned char r) {		// rotate register left
 	unsigned char n = memo.reg[r];
 	memo.reg[r] = n << 1;
-	memo.setflag_C(((n >> 7) & 0x01) == 1);
 	memo.setflag_Z(0);
 	memo.setflag_N(0);
 	memo.setflag_H(0);
+	memo.setflag_C(((n >> 7) & 0x01) == 1);
 }
 
-void cpu_instr::rot_left_c(unsigned char r) {						// rotate register left thru carry
+void  cpu_instr::rot_left(unsigned short a) {		// rotate mem addr left
+	unsigned char n = memo.mem[a];
+	memo.mem[a] = n << 1;
+	memo.setflag_Z(0);
+	memo.setflag_N(0);
+	memo.setflag_H(0);
+	memo.setflag_C(((n >> 7) & 0x01) == 1);
+}
+
+void cpu_instr::rot_left_c(unsigned char r) {		// rotate register left thru carry
 	unsigned char n = memo.reg[r];
 	unsigned char msb = (n >> 7) & 0x01;
 	n = n << 1;
 	memo.getflag_C() ? n |= 0x01 : n &= 0xFE; // 0xFE = 0b11111110
 	memo.reg[r] = n;
-	memo.setflag_C(msb);
 	memo.setflag_Z(0);
 	memo.setflag_N(0);
 	memo.setflag_H(0);
+	memo.setflag_C(msb);
 }
 
-void  cpu_instr::rot_right(unsigned char r) {						// rotate register right
+void cpu_instr::rot_left_c(unsigned short a) {		// rotate mem addr left thru carry
+	unsigned char n = memo.mem[a];
+	unsigned char msb = (n >> 7) & 0x01;
+	n = n << 1;
+	memo.getflag_C() ? n |= 0x01 : n &= 0xFE; // 0xFE = 0b11111110
+	memo.mem[a] = n;
+	memo.setflag_Z(0);
+	memo.setflag_N(0);
+	memo.setflag_H(0);
+	memo.setflag_C(msb);
+}
+
+void  cpu_instr::rot_right(unsigned char r) {		// rotate register right
 	unsigned char n = memo.reg[r];
 	memo.setflag_C((n & 0x01) == 1);
 	memo.reg[r] = n >> 1;
@@ -367,16 +388,122 @@ void  cpu_instr::rot_right(unsigned char r) {						// rotate register right
 	memo.setflag_H(0);
 }
 
-void cpu_instr::rot_right_c(unsigned char r) {						// rotate register right thru carry
+void  cpu_instr::rot_right(unsigned short a) {		// rotate mem addr right
+	unsigned char n = memo.mem[a];
+	memo.setflag_C((n & 0x01) == 1);
+	memo.mem[a] = n >> 1;
+	memo.setflag_Z(0);
+	memo.setflag_N(0);
+	memo.setflag_H(0);
+}
+
+void cpu_instr::rot_right_c(unsigned char r) {		// rotate register right thru carry
 	unsigned char n = memo.reg[r];
 	unsigned char lsb = n & 0x01;
 	n = n >> 1;
 	memo.getflag_C() ? n |= 0x80 : n &= 0x7F; // 0x80 = 0b10000000, 0x7F = 0b01111111
 	memo.reg[r] = n;
-	memo.setflag_C(lsb);
 	memo.setflag_Z(0);
 	memo.setflag_N(0);
 	memo.setflag_H(0);
+	memo.setflag_C(lsb);
+}
+
+void cpu_instr::rot_right_c(unsigned short a) {		// rotate mem addr right thru carry
+	unsigned char n = memo.mem[a];
+	unsigned char lsb = n & 0x01;
+	n = n >> 1;
+	memo.getflag_C() ? n |= 0x80 : n &= 0x7F; // 0x80 = 0b10000000, 0x7F = 0b01111111
+	memo.mem[a] = n;
+	memo.setflag_Z(0);
+	memo.setflag_N(0);
+	memo.setflag_H(0);
+	memo.setflag_C(lsb);
+}
+
+void cpu_instr::swap_reg(unsigned char r) {			// swap high and low nybbles of reg
+	unsigned char data = memo.reg[r];
+	unsigned char high = (data >> 4) & 0x0F;
+	data = (data << 4) & 0xF0;
+	unsigned char result = data | high;
+	memo.reg[r] = result;
+	memo.setflag_Z(result == 0);
+	memo.setflag_N(false);
+	memo.setflag_C(false);
+}
+
+void cpu_instr::swap_addr(unsigned short a) {		// swap high and low nybbles at addr
+	unsigned char data = memo.mem[a];
+	unsigned char high = (data >> 4) & 0x0F;
+	data = (data << 4) & 0xF0;
+	unsigned char result = data | high;
+	memo.mem[a] = result;
+	memo.setflag_Z(result == 0);
+	memo.setflag_N(false);
+	memo.setflag_C(false);
+}
+
+void cpu_instr::shift_left(unsigned char r) {		// shift register left
+	unsigned char msb = memo.reg[r] & 0x80;			// docs have this as arithmetic shift,
+	memo.reg[r] = memo.reg[r] << 1;					// but theres no difference on left shift
+	memo.setflag_Z(memo.reg[r] == 0);
+	memo.setflag_N(0);
+	memo.setflag_C(msb == 0x80);
+}
+
+void cpu_instr::shift_left(unsigned short a) {		// shift addr left
+	unsigned char msb = memo.mem[a] & 0x80;
+	memo.mem[a] = memo.mem[a] << 1;
+	memo.setflag_Z(memo.mem[a] == 0);
+	memo.setflag_N(0);
+	memo.setflag_C(msb == 0x80);
+}
+
+void cpu_instr::shift_right_a(unsigned char r) {	// shift reg right arithmetic
+	unsigned char msb = memo.reg[r] & 0x80;
+	unsigned char lsb = memo.reg[r] & 0x01;
+	memo.reg[r] = (memo.reg[r] >> 1) | msb;
+	memo.setflag_Z(memo.reg[r] == 0);
+	memo.setflag_N(0);
+	memo.setflag_C(lsb == 0x80);
+}
+
+void cpu_instr::shift_right_a(unsigned short a) {	// shift addr right arithmetic
+	unsigned char msb = memo.mem[a] & 0x80;
+	unsigned char lsb = memo.mem[a] & 0x01;
+	memo.mem[a] = (memo.mem[a] >> 1) | msb;
+	memo.setflag_Z(memo.mem[a] == 0);
+	memo.setflag_N(0);
+	memo.setflag_C(lsb == 0x80);
+}
+
+void cpu_instr::shift_right_l(unsigned char r) {	// shift reg right logical
+	unsigned char lsb = memo.reg[r] & 0x01;
+	memo.reg[r] = memo.reg[r] >> 1;
+	memo.setflag_Z(memo.reg[r] == 0);
+	memo.setflag_N(0);
+	memo.setflag_C(lsb == 0x80);
+}
+
+void cpu_instr::shift_right_l(unsigned short a) {	// shift addr right logical
+	unsigned char lsb = memo.mem[a] & 0x01;
+	memo.mem[a] - memo.mem[a] >> 1;
+	memo.setflag_Z(memo.mem[a] == 0);
+	memo.setflag_N(0);
+	memo.setflag_C(lsb == 0x80);
+}
+
+// Single-bit operations
+void cpu_instr::bit_reg(unsigned char b, unsigned char r) {
+	unsigned char bit = (memo.reg[r] >> b) & 0x01;
+	memo.setflag_Z(bit);
+	memo.setflag_N(0);
+}
+
+void cpu_instr::bit_addr(unsigned char b, unsigned short a) {
+	unsigned char bit = (memo.mem[a] >> b) & 0x01;
+	memo.setflag_Z(bit);
+	memo.setflag_N(0);
 }
 
 void cpu_instr::set_bit_reg(unsigned char b, unsigned char r) {		// set bit b of register

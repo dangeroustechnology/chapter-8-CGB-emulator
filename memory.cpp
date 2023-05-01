@@ -56,11 +56,13 @@ unsigned short memory::get_HL() {
 // 16-bit register setters
 void memory::set_AF(unsigned short data) {
     unsigned char a = (data >> 8) & 0xFF;
+    unsigned char f = data & 0x00FF;
     reg[0] = a;
-    unsigned char f = (data >> 4) & 0x0F; // flags are in upper nybble of F
+    reg[1] = f;
+    f >>= 4; // flags are in upper nybble of F
     for (int i = 0; i < 4; i++) {
         (f & 0x1) == 1 ? flags[i] = true : flags[i] = false;
-        f = f >> 1;
+        f >>= 1;
     }
 }
 
@@ -103,18 +105,22 @@ bool memory::getflag_C() {
 // flag setters
 void memory::setflag_Z(bool flag) {
     flags[0] = flag;
+    flag ? reg[1] |= 0x80 : reg[1] &= 0x7F;
 }
 
 void memory::setflag_N(bool flag) {
     flags[1] = flag;
+    flag ? reg[1] |= 0x40 : reg[1] &= 0xBF;
 }
 
 void memory::setflag_H(bool flag) {
     flags[2] = flag;
+    flag ? reg[1] |= 0x20 : reg[1] &= 0xDF;
 }
 
 void memory::setflag_C(bool flag) {
     flags[3] = flag;
+    flag ? reg[1] |= 0x10 : reg[1] &= 0xEF;
 }
 
 unsigned char memory::read() {  // read a byte and increment PC
