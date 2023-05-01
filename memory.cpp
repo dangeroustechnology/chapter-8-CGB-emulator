@@ -20,15 +20,9 @@ void memory::fill(string filename) {
 
 // 16-bit register getters
 unsigned short memory::get_AF() {
-    unsigned short high = reg[0];
-    high = high << 8;
-    unsigned char low = 0;
-    for (int i = 0; i < 4; i++) {
-        flags[i] == true ? low |= 0x1 : low |= 0x0;
-        low = low << 1;
-    }
-    low = low << 4; // flags should be in upper nybble of low
-    unsigned short af = high | low;
+    unsigned short af = reg[0];
+    af = af << 8;
+    af |= reg[1];
     return af;
 }
 
